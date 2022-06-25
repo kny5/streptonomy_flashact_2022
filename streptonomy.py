@@ -27,7 +27,7 @@ while True:
     screen.blit(laberinto, (0,0))
     screen.blit(streptonomy, pygame.mouse.get_pos())
 
-    screen.update(pygame.mouse.get_pos())
+    # screen.update(pygame.mouse.get_pos())
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
