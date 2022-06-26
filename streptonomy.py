@@ -103,11 +103,23 @@ def controller_lenght(mouse_position):
     xf, yf = mouse_position[0], mouse_position[1]
     return sqrt(((yf-yi)**2)+((xi-xf)**2))
 
-def controller_scroll(controller_lenght):
+def controller_scroll(mouse_position):
     xi, yi = display_size[0]/2, display_size[1]/2
     xf, yf = mouse_position[0], mouse_position[1]
 
-    return scrolling
+    x_sense = 0
+    y_sense = 0
+
+    if xf > xi:
+        x_sense = 1
+    else:
+        x_sense = -1
+    if yf > yi:
+        y_sense = 1
+    else:
+        y_sense = -1
+
+    return (x_sense, y_sense)
 
 
 while True:
@@ -135,6 +147,7 @@ while True:
     #controller ui
     write(str(controller_angle(pygame.mouse.get_pos())), (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+200))
     write(str(controller_lenght(pygame.mouse.get_pos())), (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+175))
+    write(str(controller_scroll(pygame.mouse.get_pos())), (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+225))
 
     #drawline
     pygame.draw.line(screen, (255,255,255), pygame.mouse.get_pos(), (pygame.mouse.get_pos()[0]-50, pygame.mouse.get_pos()[1]-50))
