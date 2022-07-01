@@ -3,20 +3,20 @@ import sys
 from pygame.locals import *
 from math import atan, degrees, sqrt, pi, tan
 
-
-display_size = (1920, 1080)
-background_size = (3840, 2160)
+background_scale = 2
+background_size = (4587*background_scale, 3863*background_scale)
 play_limits_max = (1300, 600)
 play_limits_min = (400, 300)
-#streptonomy_angle = 0
-streptonomy_size = (54*0.8,172*0.8)
+streptonomy_scale = 0.9
+streptonomy_size = (54*streptonomy_scale,172*streptonomy_scale)
 controller_ui_txt_size = 20
 
 clock = pygame.time.Clock()
-screen = pygame.display.set_mode(display_size)
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
+display_size = pygame.display.get_surface().get_size()
 background = pygame.image.load("assets/art/fondo_1er_plano.png")
-laberinto = pygame.image.load("assets/art/fondo.png")
+laberinto = pygame.transform.scale(pygame.image.load("assets/art/fondo_collision.png"), background_size)
 
 surface = pygame.Surface(background_size)
 
@@ -31,29 +31,6 @@ pygame.mouse.set_visible(0)
 
 count_x = 0
 count_y = 0
-
-def scroll(pos):
-    global count_x, count_y, play_limits_max
-    scrolling = []
-    if count_x < 0:
-        count_x = 0
-    if count_y < 0:
-        count_y = 0
-    if count_x > background_size[0]:
-        count_x = background_size[0]
-    if count_y < background_size[1]:
-        count_y = background_size[1]
-    if pos[0] > play_limits_max[0]:
-        count_x += 1
-    if pos[1] > play_limits_max[1]:
-        count_y += 1
-    if pos[0] < play_limits_min[0]:
-        count_x -= 1
-    if pos[1] < play_limits_min[1]:
-        count_y -= 1
-    else:
-        pass
-    return (-count_x, -count_y)
 
 pygame.font.init()
 font=pygame.font.Font(None,20)
@@ -84,8 +61,8 @@ def scale_streptonomy(sprites):
 
 
 def controller_angle(mouse_position):
-    xi, yi = display_size[0]/2, display_size[1]/2
-    xf, yf = mouse_position[0], mouse_position[1]
+    xi, yi = 0, 0
+    xf, yf = mouse_position[0]-display_size[0]/2, mouse_position[1]-display_size[1]/2
     try:
         m = (yf-yi)/(xf-xi)
         dx = xi-xf
@@ -98,28 +75,33 @@ def controller_angle(mouse_position):
         angle = pi + atan(m)
     return 90 - degrees(angle)
 
+
 def controller_lenght(mouse_position):
     xi, yi = display_size[0]/2, display_size[1]/2
     xf, yf = mouse_position[0], mouse_position[1]
     return sqrt(((yf-yi)**2)+((xi-xf)**2))
 
+
 def controller_scroll(mouse_position):
+    global count_x, count_y
+    factor = 50
     xi, yi = display_size[0]/2, display_size[1]/2
     xf, yf = mouse_position[0], mouse_position[1]
-
-    x_sense = 0
-    y_sense = 0
+    speed = sqrt(((yf-yi)**2)+((xi-xf)**2)) / factor
 
     if xf > xi:
-        x_sense = 1
+        x_sense = 1*speed
     else:
-        x_sense = -1
+        x_sense = -1*speed
     if yf > yi:
-        y_sense = 1
+        y_sense = 1*speed
     else:
-        y_sense = -1
+        y_sense = -1*speed
 
-    return (x_sense, y_sense)
+    count_x -= x_sense
+    count_y -= y_sense
+
+    return (count_x, count_y)
 
 
 while True:
@@ -134,8 +116,9 @@ while True:
     streptonomy_sprites_rot = rotate_streptonomy(streptonomy_sprites_scaled)
     streptonomy_anim = streptonomy_sprites_rot[value]
 
+    #translations
     screen.blit(background, (0,0))
-    screen.blit(laberinto, scroll(pygame.mouse.get_pos()))
+    screen.blit(laberinto, controller_scroll(pygame.mouse.get_pos()))
     screen.blit(streptonomy_anim, pygame.mouse.get_pos())
 
     #Texts
@@ -145,17 +128,19 @@ while True:
     write("Nitrogeno 10 gpL", (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+150))
 
     #controller ui
-    write(str(controller_angle(pygame.mouse.get_pos())), (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+200))
+    write(str(controller_angle(pygame.mouse.get_pos())), (display_size[0]/2,display_size[1]/2))
     write(str(controller_lenght(pygame.mouse.get_pos())), (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+175))
     write(str(controller_scroll(pygame.mouse.get_pos())), (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+225))
 
     #drawline
-    pygame.draw.line(screen, (255,255,255), pygame.mouse.get_pos(), (pygame.mouse.get_pos()[0]-50, pygame.mouse.get_pos()[1]-50))
-    pygame.draw.line(screen, (255,255,255), pygame.mouse.get_pos(), (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+100))
-    pygame.draw.line(screen, (255,255,255), pygame.mouse.get_pos(), (display_size[0]/2,display_size[1]/2))
+    #pygame.draw.line(screen, (255,255,255), pygame.mouse.get_pos(), (pygame.mouse.get_pos()[0]-50, pygame.mouse.get_pos()[1]-50))
+    #pygame.draw.line(screen, (255,255,255), pygame.mouse.get_pos(), (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+100))
+    pygame.draw.line(screen, (255,255,255), pygame.mouse.get_pos(), (display_size[0]/2,display_size[1]/2), 2)
     #drawcircle
-    pygame.draw.circle(screen, (255,255,255), (display_size[0]/2,display_size[1]/2), 50, 1)
-    pygame.draw.circle(screen, (255,255,255), pygame.mouse.get_pos(), 100, 1)
+    pygame.draw.circle(screen, (255,255,255), (display_size[0]/2,display_size[1]/2), 50, 2)
+    pygame.draw.circle(screen, (255,255,255), pygame.mouse.get_pos(), 100, 2)
+    #drawrectangle ui
+    pygame.draw.rect(screen, (255,255,255), pygame.Rect(30, 30,display_size[1], 60))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
