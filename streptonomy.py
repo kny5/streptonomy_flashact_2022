@@ -2,11 +2,11 @@ import pygame
 import sys
 from pygame.locals import *
 from math import atan, degrees, sqrt, pi, tan
+from chapin_engine.collide import Grid, collision_points
 
-background_scale = 2
-background_size = (4587*background_scale, 3863*background_scale)
-play_limits_max = (1300, 600)
-play_limits_min = (400, 300)
+background_scale = 4
+window_size = (1920,1080)
+background_size = (window_size[0]*background_scale, window_size[1]*background_scale)
 streptonomy_scale = 0.9
 streptonomy_size = (54*streptonomy_scale,172*streptonomy_scale)
 controller_ui_txt_size = 20
@@ -104,6 +104,8 @@ def controller_scroll(mouse_position):
     return (count_x, count_y)
 
 
+game_grid = Grid('assets/art/fondo.png', debug=False)
+
 while True:
     streptonomy_angle = controller_angle(pygame.mouse.get_pos())
     # animation
@@ -118,11 +120,12 @@ while True:
 
     #translations
     screen.blit(background, (0,0))
-    screen.blit(laberinto, controller_scroll(pygame.mouse.get_pos()))
+    #screen.blit(laberinto, controller_scroll(pygame.mouse.get_pos()))
+    screen.blit(laberinto, (0,0))
     screen.blit(streptonomy_anim, pygame.mouse.get_pos())
 
     #Texts
-    write(str(pygame.mouse.get_pos()), pygame.mouse.get_pos())
+    write("pointer: " + str(pygame.mouse.get_pos()), pygame.mouse.get_pos())
     write(str((count_x, count_y)), (pygame.mouse.get_pos()[0]-50, pygame.mouse.get_pos()[1]-50))
     write("Streptonomy", (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]-20))
     write("Nitrogeno 10 gpL", (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]+150))
@@ -140,7 +143,12 @@ while True:
     pygame.draw.circle(screen, (255,255,255), (display_size[0]/2,display_size[1]/2), 50, 2)
     pygame.draw.circle(screen, (255,255,255), pygame.mouse.get_pos(), 100, 2)
     #drawrectangle ui
-    pygame.draw.rect(screen, (255,255,255), pygame.Rect(30, 30,display_size[1], 60))
+    #pygame.draw.rect(screen, (255,255,255), pygame.Rect(30, 30,display_size[1], 60))
+
+    #collision
+
+    pygame.draw.polygon(screen, (255,255,255),collision_points(game_grid, pygame.mouse.get_pos()), 1)
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
