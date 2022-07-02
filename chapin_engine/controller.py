@@ -1,9 +1,9 @@
 from math import atan, degrees, sqrt, pi, tan
 
+
 count_x = 0
 count_y = 0
 factor = 50
-
 
 
 def rotate_streptonomy(sprite):
@@ -29,7 +29,7 @@ def controller_angle(mouse_position, display_size):
         angle = atan(m)
     else:
         angle = pi + atan(m)
-    return degrees(angle) - 90
+    return 90 - degrees(angle)
 
 
 def controller_lenght(mouse_position):
@@ -68,3 +68,7 @@ def controller_scroll(mouse_position, display_size, game_display_size):
 
     #print(count_x, count_y)
     return (count_x, count_y)
+
+
+def controller_zoom():
+    

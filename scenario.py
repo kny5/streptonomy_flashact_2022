@@ -8,7 +8,7 @@ from chapin_engine.controller import controller_scroll, controller_angle
 
 
 #Window setup
-scenario_scale = 1
+scenario_scale = 3
 pygame.init()
 game_display = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 game_display_window = pygame.display.get_surface().get_size()
@@ -17,7 +17,8 @@ game_display_window = pygame.display.get_surface().get_size()
 scenario_img = pygame.image.load("assets/art/fondo_1er_plano.png")
 game_display_size = tuple(map( lambda p: scenario_scale*p, scenario_img.get_size()))
 labyrinth_img = pygame.image.load("assets/art/fondo_collision.png")
-labyrinth_img_scaled = pygame.transform.scale(labyrinth_img,labyrinth_img.get_size())
+#labyrinth_img_scaled = pygame.transform.scale(labyrinth_img,labyrinth_img.get_size())
+labyrinth_img_scaled = pygame.transform.scale(labyrinth_img, game_display_size)
 main_character = [pygame.image.load("assets/art/bacteria/avanzar/avanzar/loop_avanzar_" + str(num) + ".png") for num in range(0,24)]
 
 #load start menu assets
@@ -56,7 +57,7 @@ video_FPS = 20
 video = cv2.VideoCapture('assets/video/intro_master_texto.mp4')
 
 
-play_intro = True
+play_intro = False
 while play_intro:
     try:
         clock.tick(video_FPS)
@@ -78,8 +79,8 @@ while gaming:
     game_display.blit(pygame.transform.rotate(main_character[0], mouse_angle),pygame.mouse.get_pos())
 
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
-        elif event.type == pygame.KEYDOWN:
-            pass
+        if event.type==pygame.KEYDOWN:
+            if event.key==pygame.K_ESCAPE:
+                gaming = False
+                break
     pygame.display.update()
