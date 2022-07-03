@@ -3,6 +3,7 @@ import sys
 from pygame.locals import *
 from math import atan, degrees, sqrt, pi, tan
 from chapin_engine.collide import Grid, collision_points
+from operator import sub
 
 background_scale = 4
 window_size = (1920,1080)
@@ -73,7 +74,7 @@ def controller_angle(mouse_position):
         angle = atan(m)
     else:
         angle = pi + atan(m)
-    return 90 - degrees(angle)
+    return -45 + degrees(angle)
 
 
 def controller_lenght(mouse_position):
@@ -117,12 +118,15 @@ while True:
     streptonomy_sprites_scaled = scale_streptonomy(streptonomy_sprites)
     streptonomy_sprites_rot = rotate_streptonomy(streptonomy_sprites_scaled)
     streptonomy_anim = streptonomy_sprites_rot[value]
+    streptonomy_centre = ( pygame.mouse.get_pos()[0] - streptonomy_anim.get_rect()[2]*0.5, pygame.mouse.get_pos()[1] - streptonomy_anim.get_rect()[3]*0.5)
+    print(pygame.mouse.get_pos(), streptonomy_centre, streptonomy_anim.get_rect())
 
     #translations
     screen.blit(background, (0,0))
     #screen.blit(laberinto, controller_scroll(pygame.mouse.get_pos()))
     screen.blit(laberinto, (0,0))
-    screen.blit(streptonomy_anim, pygame.mouse.get_pos())
+    screen.blit(streptonomy_anim, streptonomy_centre)
+    #screen.blit(streptonomy_anim, pygame.mouse.get_pos())
 
     #Texts
     write("pointer: " + str(pygame.mouse.get_pos()), pygame.mouse.get_pos())
