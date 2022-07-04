@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-
+from math import sqrt
 
 class Grid:
     def __init__(self, background_image, debug=True):
@@ -36,6 +36,19 @@ def collision_points(grid, mouse_location):
         for yP in collision_points_y:
             collision_points.append((xP,yP))
     return collision_points
+
+
+def collide(sprite1, mouse_position):
+    xi, yi = sprite1[0], sprite1[1]
+    xf, yf = mouse_position[0], mouse_position[1]
+    dist = sqrt(((yf-yi)**2)+((xi-xf)**2))
+    if dist < 50:
+        check = True
+    else:
+        check = False
+    return check
+
+
 
 if __name__ == "__main__":
     grid = Grid('assets/art/fondo.png', debug=False)

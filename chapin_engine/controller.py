@@ -4,6 +4,7 @@ from math import atan, degrees, sqrt, pi, tan
 count_x = 0
 count_y = 0
 factor = 50
+speed_calibration = 0.7
 
 
 def rotate_streptonomy(sprite):
@@ -45,26 +46,27 @@ def controller_scroll(mouse_position, display_size, game_display_size):
     xf, yf = mouse_position[0], mouse_position[1]
     speed = sqrt(((yf-yi)**2)+((xi-xf)**2)) / factor
 
-    if xf > xi:
-        x_sense = 1*speed
-    else:
-        x_sense = -1*speed
-    if yf > yi:
-        y_sense = 1*speed
-    else:
-        y_sense = -1*speed
+    if speed > speed_calibration:
+        if xf > xi:
+            x_sense = 1*speed
+        else:
+            x_sense = -1*speed
+        if yf > yi:
+            y_sense = 1*speed
+        else:
+            y_sense = -1*speed
 
-    count_x -= x_sense
-    count_y -= y_sense
+        count_x -= x_sense
+        count_y -= y_sense
 
-    if 0 <= count_x:
-        count_x += x_sense
-    if 0 <= count_y:
-        count_y += y_sense
-    if not count_x > (- game_display_size[0] + display_size[0]):
-        count_x -= -x_sense
-    if not count_y > (- game_display_size[1] + display_size[1]):
-        count_y -= -y_sense
+        if 0 <= count_x:
+            count_x += x_sense
+        if 0 <= count_y:
+            count_y += y_sense
+        if not count_x > (- game_display_size[0] + display_size[0]):
+            count_x -= -x_sense
+        if not count_y > (- game_display_size[1] + display_size[1]):
+            count_y -= -y_sense
 
     #print(count_x, count_y)
     return (count_x, count_y)
