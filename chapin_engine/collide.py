@@ -20,7 +20,7 @@ class Grid:
         if debug:
             for point in self.points:
                 if self.numpy_img[point][3] == 255:
-                    self.numpy_img[point][:3] = 0
+                    #self.numpy_img[point][:3] = 0
                     self.collision_points.append((point[0]*scale, point[1]*scale))
                 else:
                     self.numpy_img[point][:4] = 255
@@ -50,6 +50,24 @@ def collide(sprite1, mouse_position):
     else:
         check = False
     return check
+
+
+def line_segment(mouse, nitro_point):
+    bx = mouse.x
+    by = mouse.y
+    ax = nitro_point[0]
+    ay = nitro_point[1]
+    bax = bx - ax
+    bay = by - ay
+    balen = sqrt( bax**2 + bay**2 )
+    delta = -100
+    bcx = bax * delta / balen
+    bcy = bay * delta / balen
+
+    cx = bx + bcx
+    cy = by + bcy
+    return (cx, cy)
+
 
 
 
