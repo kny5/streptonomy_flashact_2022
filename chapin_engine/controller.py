@@ -63,12 +63,12 @@ def controller_scroll(mouse_position, display_size, game_display_size):
             count_x += x_sense
         if 0 <= count_y:
             count_y += y_sense
-        if not count_x > (- game_display_size[0] + display_size[0]):
+        if not count_x > (display_size[0] - game_display_size[0]):
             count_x -= -x_sense
-        if not count_y > (- game_display_size[1] + display_size[1]):
+        if not count_y > (display_size[1]- game_display_size[1]):
             count_y -= -y_sense
 
-    #print(count_x, count_y)
+    print(count_x, count_y)
     return (count_x, count_y)
 
 
