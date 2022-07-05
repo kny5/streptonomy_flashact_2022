@@ -29,8 +29,6 @@ scenario_img = pygame.image.load("assets/art/fondo_1er_plano.png")
 grid = Grid('assets/art/fondo.png', scenario_scale, debug=True)
 labyrinth_img = pygame.image.load("assets/art/fondo_collision_grid.png")
 game_display_size = (labyrinth_img.get_size()[1]*scenario_scale, labyrinth_img.get_size()[0]*scenario_scale)
-print("T"*90)
-print(game_display_size)
 labyrinth_img_scaled = pygame.transform.scale2x(labyrinth_img)
 main_character = [pygame.image.load("assets/art/bacteria/avanzar/avanzar/loop_avanzar_" + str(num) + ".png") for num in range(0,24)]
 
@@ -38,8 +36,9 @@ main_character = [pygame.image.load("assets/art/bacteria/avanzar/avanzar/loop_av
 #load other sprites
 leaf_img = pygame.image.load("assets/art/objects/hoja2.png")
 nitro_img = pygame.image.load("assets/art/objects/nitrogeno.png")
-
-
+root_img_1 = pygame.image.load("assets/art/objects/planta2.png")
+root_img_2 = pygame.image.load("assets/art/objects/planta2.png")
+root_img_3 = pygame.image.load("assets/art/objects/planta2.png")
 
 
 #load start menu assets
@@ -93,40 +92,66 @@ while play_intro:
         break
 
 
-#grid
-
 #print(grid.path_points)
 def sampling_path_points():
     return random.sample(grid.path_points, 1)[0]
 
-print("H"*40)
-print(sampling_path_points())
-
 
 #Game Loop
 grid_max = max(grid.points)
-print("y"*90)
-print(grid_max)
 gaming = True
 animation_step = 0
 nitro_score = 0
+chinampa_score = 0
 pick_up = None
 setup = True
+timer = 0
+
+class Tapita(pygame.sprite.Sprite):
+    g = .2
+    def __init__(self, pos, screen):
+        super().__init__()
+        self.image = pygame.image.load("assets/art/objects/tapa.png")
+        self.rect = self.image.get_rect(center=pos)
+        self.pos_y = pos[1]
+        self.speed_y = 0
+        self.screen = screen
+        self.pos_x = pos[0]
+        self.speed_x = 0
+
+    def update(self, scroll_pos):
+        self.speed_y += self.g
+        self.pos_y += self.speed_y
+        self.rect.y = self.pos_y
+
+        self.rect.x = self.pos_x
+
+        if self.pos_y > self.screen.get_height():
+            self.kill()  # Remove off-screen circles.
+
+fallers = pygame.sprite.Group(Tapita((200,200),game_display))
+
+
 while gaming:
     if setup:
         sample_position = sampling_path_points()
         setup = False
 
     clock.tick(game_FPS)
+
     if animation_step >= len(main_character):
         animation_step = 0
+
+    if timer >= 200:
+        timer = 0
+        randomizer = (random.randrange(10,grid_max[0], 50), 0)
+        fallers.add(Tapita((scroll_translation[0]+randomizer[0], scroll_translation[1]+randomizer[1]), game_display))
+
     #images to display
     game_display.blit(scenario_img, (0,0))
 
     #pygame.draw.rect(game_display, (255,255,255), pygame.Rect(0, 0, game_display_window[0], game_display_window[1]), 50)
     scroll_translation = controller_scroll(pygame.mouse.get_pos(), game_display_window, (labyrinth_img_scaled.get_size()[0],labyrinth_img_scaled.get_size()[1] ))
-    print("5"*90)
-    print(nitro_img.get_rect())
 
     game_display.blit(labyrinth_img_scaled, scroll_translation)
     mouse_angle = controller_angle(pygame.mouse.get_pos(), game_display_window)
@@ -138,18 +163,23 @@ while gaming:
     #uitexts
     write("pointer: " + str(main_character_centre), 20, pygame.mouse.get_pos())
     write("Nitro: " + str(round(nitro_score)), 100, (100,100))
+    write("Root: " + str(round(chinampa_score)), 100, (500,100))
     write("Nitro_position: " + str(sample_position), 50, (200,200))
-
     nitro_position = (scroll_translation[0] - 75*0.5 + sample_position[0], scroll_translation[1] - 95*0.5 + sample_position[1] )
-    write("NH3", 200, nitro_position)
     nitro_collide = collide(nitro_position, pygame.mouse.get_pos())
+    write("NH3", 200, nitro_position)
 
 
     #circles
-    pygame.draw.circle(game_display, (255,255,255), (scroll_translation[0] + grid_max[0], scroll_translation[1] + grid_max[1]), 200, 2)
+    #pygame.draw.circle(game_display, (255,255,255), (scroll_translation[0] + grid_max[0], scroll_translation[1] + grid_max[1]), 200, 2)
     pygame.draw.line(game_display, (255,255,255), pygame.mouse.get_pos(), nitro_position, 2)
     pygame.draw.line(game_display, (255,255,255), (0,nitro_position[1]), (grid_max[0], nitro_position[1]), 2)
     pygame.draw.line(game_display, (255,255,255), (nitro_position[0], 0), (nitro_position[0], grid_max[1]), 2)
+
+    #roots
+    game_display.blit(root_img_1, (scroll_translation[0]+2000*2, scroll_translation[1]))
+    game_display.blit(root_img_2, (scroll_translation[0]+2300*2, scroll_translation[1]))
+    game_display.blit(root_img_3, (scroll_translation[0]+3400*2, scroll_translation[1]))
 
     if not nitro_collide and not pick_up:
         game_display.blit(nitro_img, nitro_position)
@@ -159,8 +189,10 @@ while gaming:
         nitro_score += 0.005
         pick_up = True
 
-    pygame.display.update()
-    animation_step += 1
+    root_collide = collide((scroll_translation[0]+2000*2, scroll_translation[1]), nitro_position)
+
+    if root_collide and pick_up:
+        chinampa_score += 1
 
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
@@ -169,4 +201,12 @@ while gaming:
                 break
             if event.key == pygame.K_RETURN:
                 sample_position = sampling_path_points()
+            #if event.type == pygame.MOUSEBUTTONDOWN:
                 pick_up = False
+
+
+    fallers.update(scroll_translation)
+    fallers.draw(game_display)
+    pygame.display.update()
+    animation_step += 1
+    timer += 1

@@ -3,7 +3,7 @@ import numpy as np
 from math import sqrt
 
 class Grid:
-    def __init__(self, background_image, scale, debug=True):
+    def __init__(self, background_image, scale, debug=True, image_out=False):
         self.grid_size = 20
         self.numpy_img = np.array(Image.open(background_image))
         self.x_points = [self.grid_size*x+1 for x in range(1,self.numpy_img.shape[1]) if 0 <= self.grid_size*x+1 <= self.numpy_img.shape[0]]
@@ -18,8 +18,6 @@ class Grid:
                 self.points.append((xP,yP))
 
         if debug:
-            print("O"*90)
-            print(self.points[-1])
             for point in self.points:
                 if self.numpy_img[point][3] == 255:
                     self.numpy_img[point][:3] = 0
@@ -27,7 +25,7 @@ class Grid:
                 else:
                     self.numpy_img[point][:4] = 255
                     self.path_points.append((point[0]*scale, point[1]*scale))
-
+        if image_out:
             pil_img = Image.fromarray(self.numpy_img)
             pil_img.save(str(background_image)[:-4]+'_collision_grid.png')
         return None
@@ -47,7 +45,7 @@ def collide(sprite1, mouse_position):
     xi, yi = sprite1[0], sprite1[1]
     xf, yf = mouse_position[0], mouse_position[1]
     dist = sqrt(((yf-yi)**2)+((xi-xf)**2))
-    if dist < 50:
+    if dist < 100:
         check = True
     else:
         check = False
