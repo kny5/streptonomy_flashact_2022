@@ -7,9 +7,10 @@ class Grid:
         self.size = 20
         self.numpy_img = np.array(Image.open(background_image))
         shape = self.numpy_img.shape
-        self.numpy_img.reshape((shape[1], shape[0], shape[2]))
+        self.numpy_img = self.numpy_img.reshape((shape[1], shape[0], shape[2]))
         print("check "*90)
         print(self.numpy_img.shape)
+        self.shape = (self.numpy_img.shape[0]*scale, self.numpy_img.shape[1]*scale)
         self.x_points = [self.size*x*scale for x in range(1,self.numpy_img.shape[0]) if 0 <= self.size*x*scale <= self.numpy_img.shape[0]-1]
         self.y_points = [self.size*y*scale for y in range(1,self.numpy_img.shape[1]) if 0 <= self.size*y*scale <= self.numpy_img.shape[1]-1]
 
