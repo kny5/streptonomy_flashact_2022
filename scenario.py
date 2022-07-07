@@ -3,7 +3,7 @@ import sys
 from pygame.locals import *
 import cv2
 from pygame import mixer
-from chapin_engine.collide import Grid, collision_points, collide, line_segment
+from chapin_engine.collide import Grid, collision_points, collide, line_segment, path
 from chapin_engine.controller import controller_scroll, controller_angle
 import random
 import pygame.gfxdraw
@@ -60,7 +60,7 @@ clock = pygame.time.Clock()
 
 
 #Splash and welcome loop
-game_FPS = 50
+game_FPS = 90
 welcoming = False
 while welcoming:
     clock.tick(game_FPS)
@@ -105,7 +105,6 @@ def drawCircleArc(screen,color,center,radius,startDeg,endDeg,thickness):
     rect = (x-radius,y-radius,radius*2,radius*2)
     startRad = startDeg
     endRad = endDeg
-
     pygame.draw.arc(screen,color,rect,startRad,endRad,thickness)
 
 
@@ -160,16 +159,13 @@ class Nitro(pygame.sprite.Sprite):
         self.pos_x = pos[0]
         self.speed_x = 0
 
-
     def randomizer():
         return (random.randrange(10,grid_max[0], 50), 0)
-
 
     def update(self, scroll_pos):
         self.speed_y += self.g
         self.pos_y += self.speed_y
         self.rect.y = self.pos_y
-
         self.rect.x = self.pos_x
 
         if self.pos_y > self.screen.get_height():
@@ -177,8 +173,6 @@ class Nitro(pygame.sprite.Sprite):
 
 
 falling = pygame.sprite.Group()
-
-
 
 
 class Mouse():
@@ -200,11 +194,8 @@ while gaming:
         sample_position = sampling_path_points()
         setup = False
 
-
     if animation_step >= len(main_character):
         animation_step = 0
-
-
 
     #images to display
     game_display.blit(scenario_img, (0,0))
@@ -218,6 +209,8 @@ while gaming:
     #circles
     nitro_position = (scroll_translation[0] - 75*0.5 + sample_position[0], scroll_translation[1] - 95*0.5 + sample_position[1] )
     nitro_collide = collide(nitro_position, mouse.pos)
+
+    path_cloud = path(mouse, grid.grid)
 
     for __r in range(50, 100):
         pygame.gfxdraw.pie(game_display, mouse.x, mouse.y, __r, 0, int(-360/main_character_health), light_blue)

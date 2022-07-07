@@ -3,7 +3,7 @@ import sys
 from pygame.locals import *
 import cv2
 from pygame import mixer
-from chapin_engine.collide import Grid, collision_points, collide, line_segment
+from chapin_engine.collide import Grid, collide, line_segment, path
 from chapin_engine.controller import controller_scroll, controller_angle
 import random
 import pygame.gfxdraw
@@ -190,6 +190,7 @@ orange = (255, 95, 31, 50)
 
 #Game loop
 while gaming:
+    color = light_blue
     clock.tick(game_FPS)
     mouse = Mouse(pygame.mouse.get_pos())
 
@@ -214,13 +215,24 @@ while gaming:
     nitro_position = (scroll_translation[0] - 75*0.5 + sample_position[0], scroll_translation[1] - 95*0.5 + sample_position[1] )
     nitro_collide = collide(nitro_position, mouse.pos)
 
-    for __r in range(50, 100):
-        pygame.gfxdraw.pie(game_display, mouse.x, mouse.y, __r, 0, int(-360/main_character_health), light_blue)
+
 
     pygame.draw.aaline(game_display, (239, 1, 149, 255), mouse.pos, line_segment(mouse, nitro_position), 1)
     main_character_rotated = pygame.transform.rotate(main_character[animation_step], mouse_angle)
     main_character_centre = (mouse.x - main_character_rotated.get_rect()[2]*0.5, mouse.y - main_character_rotated.get_rect()[3]*0.5)
     game_display.blit(main_character_rotated, main_character_centre)
+
+    #path_cloud = path(mouse, grid)
+    mouse_relative_pos = (int(- scroll_translation[0] + mouse.x), int(- scroll_translation[1] + mouse.y))
+
+    if labyrinth_img_scaled.get_at((mouse_relative_pos))[3] == 255:
+        color = orange
+        write("collision!: ", 50, (100,100))
+        main_character_health -= 0.01
+
+
+    for __r in range(50, 100):
+        pygame.gfxdraw.pie(game_display, mouse.x, mouse.y, __r, 0, int(-360/main_character_health), color)
 
     #uitexts
     #write("pointer: " + str(main_character_centre), 20, mouse.pos)
@@ -244,7 +256,7 @@ while gaming:
         nitro_score += 0.005
         pick_up = True
 
-    root_collide = collide((scroll_translation[0]+2000*2+100, scroll_translation[1]), mouse.pos)
+    root_collide = collide((scroll_translation[0]+2100*2+100, scroll_translation[1]), mouse.pos)
 
     if root_collide and pick_up:
         chinampa_score += 0.2
