@@ -205,7 +205,7 @@ class Mouse():
          return (int(- scroll_translation[0] + self.x), int(- scroll_translation[1] + self.y))
 
     def save_pos(self):
-        if len(mouse.saved_positions) >= 10:
+        if len(mouse.saved_positions) >= 3:
             self.saved_positions.pop(0)
         self.saved_positions.append(self.pos)
 
@@ -254,6 +254,8 @@ while gaming:
         switch = False
         color = orange
         main_character.health -= 0.01
+        for pos in reversed(mouse.saved_positions):
+            pygame.mouse.set_pos(pos)
 
 
     game_display.blit(labyrinth_img_scaled, scroll_translation)
