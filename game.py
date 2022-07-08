@@ -216,8 +216,8 @@ falling = pygame.sprite.Group()
 nitros = pygame.sprite.Group()
 bacterias = pygame.sprite.Group()
 
-MOUSE_P = [0,0]
-
+SCROLL = [0,0]
+switch = False
 #Game loop
 while gaming:
     color = light_blue
@@ -227,12 +227,12 @@ while gaming:
 
     #images to display
     game_display.blit(scenario_img, (0,0))
-    scroll_translation = controller_scroll(mouse.pos, game_display_window, (labyrinth_img_scaled.get_size()[0],labyrinth_img_scaled.get_size()[1] ))
 
     if setup:
         pygame.mouse.set_visible(0)
         sample_position = sampling_path_points()
         main_character = Main_character_sprite_obj()
+        scroll_translation = (0,0)
         for nit in range(100):
             nitros.add(Nitro(game_display))
         setup = False
@@ -240,22 +240,32 @@ while gaming:
     if animation_step >= len(Main_character_sprite_obj.sprites):
         animation_step = 0
 
-    game_display.blit(labyrinth_img_scaled, scroll_translation)
+    if switch:
+        scroll_translation = controller_scroll(mouse.pos, game_display_window, (labyrinth_img_scaled.get_size()[0],labyrinth_img_scaled.get_size()[1]))
+        SCROLL = copy.copy(scroll_translation)
+    else:
+        scroll_translation = copy.copy(SCROLL)
+        switch = True
 
+    MOUSE_REL = mouse.relative_position(scroll_translation)
+    CHECK_RGBA = labyrinth_img_scaled.get_at(MOUSE_REL)[3]
+
+    if CHECK_RGBA == 255:
+        switch = False
+        color = orange
+        main_character.health -= 0.01
+
+
+    game_display.blit(labyrinth_img_scaled, scroll_translation)
     #circles
     nitro_position = (scroll_translation[0] - 75*0.5 + sample_position[0], scroll_translation[1] - 95*0.5 + sample_position[1] )
+
     nitro_collide = collide(nitro_position, mouse.pos)
 
     pygame.draw.aaline(game_display, (239, 1, 149, 255), mouse.pos, line_segment(mouse, nitro_position), 1)
 
     bacterias.add(main_character)
     main_character.update(mouse, animation_step)
-    MOUSE_REL = mouse.relative_position(scroll_translation)
-    CHECK_RGBA = labyrinth_img_scaled.get_at(MOUSE_REL)[3]
-    if CHECK_RGBA == 255:
-        color = orange
-        write("collision!: ", 50, (100,100))
-        main_character.health -= 0.01
 
     #pygame.sprite.spritecollideany(main_character, nitros)
 
