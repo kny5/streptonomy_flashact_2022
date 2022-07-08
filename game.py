@@ -4,10 +4,11 @@ from pygame.locals import *
 import cv2
 from pygame import mixer
 from chapin_engine.collide import Grid, collide, line_segment, path
-from chapin_engine.controller import controller_scroll, controller_angle
+from chapin_engine.controller import controller_scroll, controller_angle, count_x, count_y
 import random
 import pygame.gfxdraw
-
+import time
+import copy
 
 
 #inits
@@ -99,7 +100,6 @@ while play_intro:
         break
 
 
-#print(grid.path_points)
 def sampling_path_points():
     return random.sample(grid.path_points, 1)[0]
 
@@ -110,7 +110,6 @@ def drawCircleArc(screen,color,center,radius,startDeg,endDeg,thickness):
 
 
 #Game Loop
-
 print("Range here"*90)
 print(grid.shape)
 gaming = True
@@ -120,8 +119,7 @@ chinampa_score = 0
 pick_up = None
 setup = True
 timer = 0
-#main_character_health = 90
-
+switch = False
 
 
 class Tapita(pygame.sprite.Sprite):
@@ -186,10 +184,6 @@ class Main_character_sprite_obj(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.health = 100
-        #self.image = Main_character_sprite_obj.sprites[0]
-        #self.irect = self.image.get_rect()
-        #self.rect = self.image.get_rect()
-        print("rect"*90)
 
     def update(self, mouse, step):
         self.image = pygame.transform.rotate(Main_character_sprite_obj.sprite_gen(step), mouse.angle)
@@ -198,9 +192,9 @@ class Main_character_sprite_obj(pygame.sprite.Sprite):
         self.rect.center = (mouse.x, mouse.y)
         print(self.rect)
 
-#tuple([int(mouse.x - self.image.get_rect()[2]*0.5), int(mouse.y - self.image.get_rect()[3]*0.5), self.image.get_rect()[2], self.image.get_rect()[3]])
 
 class Mouse():
+    saved_positions = []
     def __init__(self, mouse_pos, game_display):
         self.pos = mouse_pos
         self.x = mouse_pos[0]
@@ -210,6 +204,11 @@ class Mouse():
     def relative_position(self, scroll_translation):
          return (int(- scroll_translation[0] + self.x), int(- scroll_translation[1] + self.y))
 
+    def save_pos(self):
+        if len(mouse.saved_positions) >= 10:
+            self.saved_positions.pop(0)
+        self.saved_positions.append(self.pos)
+
 light_blue = (7,207,246,75)
 orange = (255, 95, 31, 50)
 
@@ -217,19 +216,18 @@ falling = pygame.sprite.Group()
 nitros = pygame.sprite.Group()
 bacterias = pygame.sprite.Group()
 
-
+MOUSE_P = [0,0]
 
 #Game loop
 while gaming:
     color = light_blue
     clock.tick(game_FPS)
     mouse = Mouse(pygame.mouse.get_pos(), game_display_window)
+    mouse.save_pos()
 
     #images to display
     game_display.blit(scenario_img, (0,0))
     scroll_translation = controller_scroll(mouse.pos, game_display_window, (labyrinth_img_scaled.get_size()[0],labyrinth_img_scaled.get_size()[1] ))
-    game_display.blit(labyrinth_img_scaled, scroll_translation)
-    #mouse_angle = controller_angle(mouse.pos, game_display_window)
 
     if setup:
         pygame.mouse.set_visible(0)
@@ -242,6 +240,7 @@ while gaming:
     if animation_step >= len(Main_character_sprite_obj.sprites):
         animation_step = 0
 
+    game_display.blit(labyrinth_img_scaled, scroll_translation)
 
     #circles
     nitro_position = (scroll_translation[0] - 75*0.5 + sample_position[0], scroll_translation[1] - 95*0.5 + sample_position[1] )
@@ -249,25 +248,16 @@ while gaming:
 
     pygame.draw.aaline(game_display, (239, 1, 149, 255), mouse.pos, line_segment(mouse, nitro_position), 1)
 
-    #main_character_rotated = pygame.transform.rotate(main_character[animation_step], mouse_angle)
-    #main_character.rotate()
-    #main_character_centre = (mouse.x - main_character_rotated.get_rect()[2]*0.5, mouse.y - main_character_rotated.get_rect()[3]*0.5)
-    #main_character_sprite = game_display.blit(main_character_rotated, main_character_centre)
-    #print("sprite here" * 90)
-    #print(main_character.image)
-
     bacterias.add(main_character)
     main_character.update(mouse, animation_step)
-
-    pygame.sprite.spritecollideany(main_character, nitros)
-
-    #mouse_relative_pos = (int(- scroll_translation[0] + mouse.x), int(- scroll_translation[1] + mouse.y))
-
-    if labyrinth_img_scaled.get_at(mouse.relative_position(scroll_translation))[3] == 255:
+    MOUSE_REL = mouse.relative_position(scroll_translation)
+    CHECK_RGBA = labyrinth_img_scaled.get_at(MOUSE_REL)[3]
+    if CHECK_RGBA == 255:
         color = orange
         write("collision!: ", 50, (100,100))
-        main_character.health -= 0
+        main_character.health -= 0.01
 
+    #pygame.sprite.spritecollideany(main_character, nitros)
 
     for __r in range(50, 100):
         pygame.gfxdraw.pie(game_display, mouse.x, mouse.y, __r, 0, int(-360/main_character.health), color)
@@ -323,4 +313,5 @@ while gaming:
     game_display.blit(fog_img, (mouse.x -2050, mouse.y - 2050))
     animation_step += 1
     timer += 1
+
     pygame.display.update()
