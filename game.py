@@ -32,8 +32,8 @@ def write(text, size, location,color=(255,255,255)):
 scenario_img = pygame.image.load("assets/art/fondo_1er_plano.png")
 grid = Grid('assets/art/fondo.png', scenario_scale, debug=True)
 labyrinth_img = pygame.image.load("assets/art/fondo_collision_grid.png")
-fog_img = pygame.image.load("assets/art/focus.png")
-frame_img = pygame.image.load("assets/art/frame.png")
+fog_img = pygame.image.load("assets/art/focus_white.png")
+#frame_img = pygame.image.load("assets/art/frame.png")
 game_display_size = (labyrinth_img.get_size()[1]*scenario_scale, labyrinth_img.get_size()[0]*scenario_scale)
 labyrinth_img_scaled = pygame.transform.scale2x(labyrinth_img)
 #main_character = [pygame.image.load("assets/art/bacteria/avanzar/avanzar/loop_avanzar_" + str(num) + ".png") for num in range(0,24)]
@@ -62,14 +62,14 @@ clock = pygame.time.Clock()
 
 
 #Splash and welcome loop
-game_FPS = 50
+game_FPS = 90
 welcoming = True
 while welcoming:
     clock.tick(game_FPS)
     game_display.blit(welcome_bg_img, (0,0))
     game_display.blit(welcome_logos_img, (0,0))
     game_display.blit(welcome_title_img, (0,0))
-    game_display.blit(frame_img, (0,0))
+    #game_display.blit(frame_img, (0,0))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -83,18 +83,23 @@ while welcoming:
 
 #play video
 video_FPS = 20
-video = cv2.VideoCapture('assets/video/intro_master_texto.mp4')
-play_intro = False
+video_intro = cv2.VideoCapture('assets/video/intro_master_texto.mp4')
+play_intro = True
 
 if play_intro:
     mixer.music.play()
 while play_intro:
     try:
         clock.tick(video_FPS)
-        play_intro, intro = video.read()
-        game_display.blit(pygame.image.frombuffer(intro.tobytes(),intro.shape[1::-1],"BGR"), (0,0))
-        game_display.blit(frame_img, (0,0))
+        play_intro, ending = video_intro.read()
+        game_display.blit(pygame.image.frombuffer(ending.tobytes(),ending.shape[1::-1],"BGR"), (0,0))
+        #game_display.blit(frame_img, (0,0))
         pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    ending = False
+                    break
     except AttributeError:
         mixer.music.stop()
         break
@@ -159,6 +164,8 @@ class Nitro(pygame.sprite.Sprite):
         self.pos_x = self.rand_x()
         self.speed_x = 0
         self.rect = self.image.get_rect(center=(self.pos_x, self.pos_y))
+        self.pick_up = False
+        self.count = True
 
     @staticmethod
     def rand_x():
@@ -168,9 +175,20 @@ class Nitro(pygame.sprite.Sprite):
     def rand_y():
         return random.randrange(10,grid.shape[1], 50)
 
-    def update(self, scroll_pos):
-        self.rect.x = self.pos_x+scroll_pos[0]
-        self.rect.y = self.pos_y+scroll_pos[1]
+    def update(self, scroll_pos, main_character):
+        if not pygame.sprite.collide_rect(self, main_character) and not self.pick_up:
+            self.rect.x = self.pos_x+scroll_pos[0]
+            self.rect.y = self.pos_y+scroll_pos[1]
+            main_character.nitro_count += 0
+            self.pick_up = False
+        else:
+            self.rect.x = main_character.rect.x
+            self.rect.y = main_character.rect.y
+            self.pick_up = True
+            if self.count:
+                main_character.nitro_count += 1
+                main_character.health += 0.1
+                self.count = False
 
 
 
@@ -184,13 +202,16 @@ class Main_character_sprite_obj(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.health = 100
+        self.nitro_count = 0
 
     def update(self, mouse, step):
+        write("Nitrogeno: " + str(self.nitro_count), 50, mouse.pos)
         self.image = pygame.transform.rotate(Main_character_sprite_obj.sprite_gen(step), mouse.angle)
         self.rect = self.image.get_bounding_rect()
         self.image = self.image.subsurface(self.rect)
         self.rect.center = (mouse.x, mouse.y)
         print(self.rect)
+
 
 
 class Mouse():
@@ -209,6 +230,8 @@ class Mouse():
             self.saved_positions.pop(0)
         self.saved_positions.append(self.pos)
 
+
+
 light_blue = (7,207,246,75)
 orange = (255, 95, 31, 50)
 
@@ -219,6 +242,8 @@ bacterias = pygame.sprite.Group()
 SCROLL = [0,0]
 switch = False
 #Game loop
+
+
 while gaming:
     color = light_blue
     clock.tick(game_FPS)
@@ -233,7 +258,7 @@ while gaming:
         sample_position = sampling_path_points()
         main_character = Main_character_sprite_obj()
         scroll_translation = (0,0)
-        for nit in range(100):
+        for nit in range(30):
             nitros.add(Nitro(game_display))
         setup = False
 
@@ -253,7 +278,10 @@ while gaming:
     if CHECK_RGBA == 255:
         switch = False
         color = orange
-        main_character.health -= 0.01
+        if main_character.health > 1:
+            main_character.health -= 1
+        else:
+            main_character.health = 0
         for pos in reversed(mouse.saved_positions):
             pygame.mouse.set_pos(pos)
 
@@ -272,8 +300,10 @@ while gaming:
     #pygame.sprite.spritecollideany(main_character, nitros)
 
     for __r in range(50, 100):
-        pygame.gfxdraw.pie(game_display, mouse.x, mouse.y, __r, 0, int(-360/main_character.health), color)
-
+        try:
+            pygame.gfxdraw.pie(game_display, mouse.x, mouse.y, __r, 0, int(-360/main_character.health), color)
+        except ZeroDivisionError:
+            pygame.gfxdraw.pie(game_display, mouse.x, mouse.y, __r, 0, int(0), color)
     #uitexts
     #write("pointer: " + str(main_character_centre), 20, mouse.pos)
     #write("Nitrogeno: " + str(round(nitro_score)), 50, (100,100))
@@ -287,14 +317,14 @@ while gaming:
 
 
 
-    if not nitro_collide and not pick_up:
-        game_display.blit(nitro_img, nitro_position)
-        write("NH3", 100, (nitro_position[0], nitro_position[1]+100))
+    #if not nitro_collide and not pick_up:
+    #    game_display.blit(nitro_img, nitro_position)
+    #    write("NH3", 100, (nitro_position[0], nitro_position[1]+100))
 
-    else:
-        game_display.blit(nitro_img, mouse.pos)
-        nitro_score += 0.005
-        pick_up = True
+    #else:
+    #    game_display.blit(nitro_img, mouse.pos)
+    #    nitro_score += 0.005
+    #    pick_up = True
 
     root_collide = collide((scroll_translation[0]+2100*2+100, scroll_translation[1]), mouse.pos)
 
@@ -318,7 +348,7 @@ while gaming:
     falling.update(scroll_translation)
     falling.draw(game_display)
 
-    nitros.update(scroll_translation)
+    nitros.update(scroll_translation, main_character)
     nitros.draw(game_display)
     bacterias.draw(game_display)
 
@@ -327,3 +357,25 @@ while gaming:
     timer += 1
 
     pygame.display.update()
+
+    if main_character.nitro_count == 30:
+        gaming = False
+
+
+video_ending = cv2.VideoCapture('assets/video/ending.mp4')
+
+while True:
+    try:
+        clock.tick(video_FPS)
+        play_ending, ending = video_ending.read()
+        game_display.blit(pygame.image.frombuffer(ending.tobytes(),ending.shape[1::-1],"BGR"), (0,0))
+        #game_display.blit(frame_img, (0,0))
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    intro = False
+                    break
+    except AttributeError:
+        mixer.music.stop()
+        break
