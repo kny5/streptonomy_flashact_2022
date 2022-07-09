@@ -43,8 +43,6 @@ labyrinth_img_scaled = pygame.transform.scale2x(labyrinth_img)
 leaf_img = pygame.image.load("assets/art/objects/hoja2.png")
 nitro_img = pygame.image.load("assets/art/objects/nitrogeno.png")
 root_img_1 = pygame.image.load("assets/art/objects/planta2.png")
-root_img_2 = pygame.image.load("assets/art/objects/planta2.png")
-root_img_3 = pygame.image.load("assets/art/objects/planta2.png")
 
 
 #load start menu assets
@@ -60,49 +58,53 @@ mixer.music.load("assets/audio/poema.mp3")
 #Global variables
 clock = pygame.time.Clock()
 
-
+game_FPS = 60
 #Splash and welcome loop
-game_FPS = 90
-welcoming = True
-while welcoming:
-    clock.tick(game_FPS)
-    game_display.blit(welcome_bg_img, (0,0))
-    game_display.blit(welcome_logos_img, (0,0))
-    game_display.blit(welcome_title_img, (0,0))
-    #game_display.blit(frame_img, (0,0))
+class Welcome:
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
-        if event.type==pygame.KEYDOWN:
-            if event.key==pygame.K_RETURN:
-                welcoming = False
-                break
-    pygame.display.update()
+    welcoming = True
+    while welcoming:
+        clock.tick(game_FPS)
+        game_display.blit(welcome_bg_img, (0,0))
+        game_display.blit(welcome_logos_img, (0,0))
+        game_display.blit(welcome_title_img, (0,0))
 
-
-#play video
-video_FPS = 20
-video_intro = cv2.VideoCapture('assets/video/intro_master_texto.mp4')
-play_intro = True
-
-if play_intro:
-    mixer.music.play()
-while play_intro:
-    try:
-        clock.tick(video_FPS)
-        play_intro, ending = video_intro.read()
-        game_display.blit(pygame.image.frombuffer(ending.tobytes(),ending.shape[1::-1],"BGR"), (0,0))
-        #game_display.blit(frame_img, (0,0))
-        pygame.display.update()
         for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    ending = False
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type==pygame.KEYDOWN:
+                if event.key==pygame.K_RETURN:
+                    welcoming = False
                     break
-    except AttributeError:
-        mixer.music.stop()
-        break
+        pygame.display.update()
+
+
+
+class Intro():
+    #play video
+    video_FPS = 20
+    video_intro = cv2.VideoCapture('assets/video/intro.mp4')
+    play_intro = True
+    mixer_switch = True
+
+    while play_intro:
+        if mixer_switch:
+            mixer.music.play()
+            mixer_switch = False
+        try:
+            clock.tick(video_FPS)
+            play_intro, intro = video_intro.read()
+            game_display.blit(pygame.image.frombuffer(intro.tobytes(),intro.shape[1::-1],"BGR"), (0,0))
+            pygame.display.update()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        mixer.music.stop()
+                        play_intro = False
+                        break
+        except AttributeError:
+            mixer.music.stop()
+            break
 
 
 def sampling_path_points():
@@ -166,6 +168,7 @@ class Nitro(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=(self.pos_x, self.pos_y))
         self.pick_up = False
         self.count = True
+        write("NH3", 100, (self.pos_x, self.pos_y+100))
 
     @staticmethod
     def rand_x():
@@ -187,7 +190,6 @@ class Nitro(pygame.sprite.Sprite):
             self.pick_up = True
             if self.count:
                 main_character.nitro_count += 1
-                main_character.health += 0.1
                 self.count = False
 
 
@@ -245,6 +247,8 @@ switch = False
 
 
 while gaming:
+    #w = Welcome()
+    #i = Intro()
     color = light_blue
     clock.tick(game_FPS)
     mouse = Mouse(pygame.mouse.get_pos(), game_display_window)
@@ -288,11 +292,10 @@ while gaming:
 
     game_display.blit(labyrinth_img_scaled, scroll_translation)
     #circles
-    nitro_position = (scroll_translation[0] - 75*0.5 + sample_position[0], scroll_translation[1] - 95*0.5 + sample_position[1] )
+    root_position = (scroll_translation[0]+2000*2, scroll_translation[1])
+    game_display.blit(root_img_1, root_position)
 
-    nitro_collide = collide(nitro_position, mouse.pos)
-
-    pygame.draw.aaline(game_display, (239, 1, 149, 255), mouse.pos, line_segment(mouse, nitro_position), 1)
+    pygame.draw.aaline(game_display, (239, 1, 149, 255), mouse.pos, line_segment(mouse, root_position), 1)
 
     bacterias.add(main_character)
     main_character.update(mouse, animation_step)
@@ -304,6 +307,7 @@ while gaming:
             pygame.gfxdraw.pie(game_display, mouse.x, mouse.y, __r, 0, int(-360/main_character.health), color)
         except ZeroDivisionError:
             pygame.gfxdraw.pie(game_display, mouse.x, mouse.y, __r, 0, int(0), color)
+
     #uitexts
     #write("pointer: " + str(main_character_centre), 20, mouse.pos)
     #write("Nitrogeno: " + str(round(nitro_score)), 50, (100,100))
@@ -311,11 +315,6 @@ while gaming:
     #write("Nitro_position: " + str(sample_position), 50, (200,200))
 
     #roots
-    game_display.blit(root_img_1, (scroll_translation[0]+2000*2, scroll_translation[1]))
-    game_display.blit(root_img_2, (scroll_translation[0]+2300*2, scroll_translation[1]))
-    game_display.blit(root_img_3, (scroll_translation[0]+3400*2, scroll_translation[1]))
-
-
 
     #if not nitro_collide and not pick_up:
     #    game_display.blit(nitro_img, nitro_position)
@@ -337,7 +336,7 @@ while gaming:
                 gaming = False
                 break
             if event.key == pygame.K_RETURN:
-                sample_position = sampling_path_points()
+                #sample_position = sampling_path_points()
             #if event.type == pygame.MOUSEBUTTONDOWN:
                 pick_up = False
 
@@ -360,22 +359,44 @@ while gaming:
 
     if main_character.nitro_count == 30:
         gaming = False
+        end = Ending()
 
 
-video_ending = cv2.VideoCapture('assets/video/ending.mp4')
+class Ending():
+    video_FPS = 20
+    video_ending = cv2.VideoCapture('assets/video/ending.mp4')
+    play_ending = True
+    while play_ending:
+        try:
+            clock.tick(video_FPS)
+            play_ending, ending = video_ending.read()
+            game_display.blit(pygame.image.frombuffer(ending.tobytes(),ending.shape[1::-1],"BGR"), (0,0))
+            #game_display.blit(frame_img, (0,0))
+            pygame.display.update()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        play_ending = False
+                        break
+        except AttributeError:
+            mixer.music.stop()
+            break
 
-while True:
-    try:
-        clock.tick(video_FPS)
-        play_ending, ending = video_ending.read()
-        game_display.blit(pygame.image.frombuffer(ending.tobytes(),ending.shape[1::-1],"BGR"), (0,0))
-        #game_display.blit(frame_img, (0,0))
-        pygame.display.update()
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    intro = False
-                    break
-    except AttributeError:
-        mixer.music.stop()
-        break
+class Creditos():
+    video_FPS = 20
+    video_creditos = cv2.VideoCapture('assets/video/creditos.m4v')
+    play_creditos = True
+    while play_creditos:
+        try:
+            clock.tick(video_FPS)
+            play_creditos, creditos = video_creditos.read()
+            game_display.blit(pygame.image.frombuffer(creditos.tobytes(),creditos.shape[1::-1],"BGR"), (0,0))
+            
+            pygame.display.update()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        play_creditos = False
+                        break
+        except AttributeError:
+            break
